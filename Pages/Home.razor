@@ -1,0 +1,67 @@
+﻿@page "/"
+@using BlazorPokeApi.Models
+@inject HttpClient Http
+
+<div class="container mt-4">
+    <h3>Consulta PokéAPI - Blazor WebAssembly</h3>
+
+    <div class="input-group mb-3 mt-3">
+        <input type="text" class="form-control" @bind="nomePokemon" placeholder="Digite o nome do Pokémon (ex: ditto, pikachu)..." />
+        <button class="btn btn-primary" @onclick="BuscarPokemon">Pesquisar</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger" role="alert">
+            @mensagemErro
+        </div>
+    }
+
+    @if (pokemon != null)
+    {
+        <div class="card mt-4" style="width: 18rem;">
+            @if (!string.IsNullOrEmpty(pokemon.Sprites?.Other?.OfficialArtwork?.FrontDefault))
+            {
+                <img src="@pokemon.Sprites.Other.OfficialArtwork.FrontDefault" class="card-img-top p-3 bg-light" alt="@pokemon.Name" />
+            }
+            <div class="card-body">
+                <h4 class="card-title text-capitalize">@pokemon.Name</h4>
+                <p class="card-text mb-1"><strong>ID:</strong> @pokemon.Id</p>
+                <p class="card-text mb-1"><strong>Altura:</strong> @pokemon.Height</p>
+                <p class="card-text mb-1"><strong>Peso:</strong> @pokemon.Weight</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string nomePokemon = "ditto";
+    private PokemonModel pokemon;
+    private string mensagemErro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BuscarPokemon();
+    }
+
+    private async Task BuscarPokemon()
+    {
+        mensagemErro = null;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nomePokemon))
+            {
+                mensagemErro = "Por favor, digite o nome de um Pokémon.";
+                return;
+            }
+
+            string url = $"https://pokeapi.co/api/v2/pokemon/{nomePokemon.ToLower().Trim()}";
+            pokemon = await Http.GetFromJsonAsync<PokemonModel>(url);
+        }
+        catch (Exception)
+        {
+            pokemon = null;
+            mensagemErro = "Pokémon não encontrado ou erro ao conectar com a API.";
+        }
+    }
+}
